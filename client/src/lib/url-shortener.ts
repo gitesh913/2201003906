@@ -1,5 +1,5 @@
 import { UrlEntry } from "@shared/schema";
-import { Log } from "../../Logging Middleware/logger";
+import { Log } from "../../../Logging Middleware/logger";
 
 export function generateShortcode(length: number = 6): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

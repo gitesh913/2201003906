@@ -6,7 +6,7 @@ import StatsTable from "@/components/stats-table";
 import { UrlEntry } from "@shared/schema";
 import { getAllUrlEntries, clearAllUrlEntries } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
-import { Log } from "../../Logging Middleware/logger";
+import { Log } from "../../../Logging Middleware/logger";
 
 export default function StatisticsPage() {
   const [urlEntries, setUrlEntries] = useState<UrlEntry[]>([]);

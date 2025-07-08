@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, Home, LinkIcon } from "lucide-react";
 import { getUrlEntry, updateUrlEntry } from "@/lib/storage";
 import { UrlEntry } from "@shared/schema";
-import { Log } from "../../Logging Middleware/logger";
+import { Log } from "../../../Logging Middleware/logger";
 
 export default function RedirectPage() {
   const params = useParams();

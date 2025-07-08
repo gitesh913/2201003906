@@ -8,7 +8,7 @@ import { UrlFormData, UrlEntry } from "@shared/schema";
 import { createShortUrl, generateShortcode } from "@/lib/url-shortener";
 import { saveUrlEntry } from "@/lib/storage";
 import { useToast } from "@/hooks/use-toast";
-import { Log } from "../../Logging Middleware/logger";
+import { Log } from "../../../Logging Middleware/logger";
 
 export default function ShortenerPage() {
   const [urlForms, setUrlForms] = useState<UrlFormData[]>(Array(5).fill(null).map(() => ({

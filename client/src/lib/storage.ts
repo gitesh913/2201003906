@@ -1,5 +1,5 @@
 import { UrlEntry } from "@shared/schema";
-import { Log } from "../../Logging Middleware/logger";
+import { Log } from "../../../Logging Middleware/logger";
 
 const STORAGE_KEY = 'url-shortener-entries';
 
