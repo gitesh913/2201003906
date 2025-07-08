@@ -8,9 +8,20 @@ interface LogEntry {
   message: string;
 }
 
+interface AffordMedCredentials {
+  email: string;
+  name: string;
+  rollNo: string;
+  accessCode: string;
+  clientID: string;
+  clientSecret: string;
+}
+
 class Logger {
   private logs: LogEntry[] = [];
   private maxLogs: number = 1000;
+  private accessToken: string | null = null;
+  private tokenExpiry: number = 0;
 
   public Log(stack: string, level: LogLevel, pkg: string, message: string): void {
     const entry: LogEntry = {
@@ -32,18 +43,113 @@ class Logger {
     this.output(entry);
   }
 
-  private output(entry: LogEntry): void {
+  private async authenticateAffordMed(): Promise<boolean> {
+    // Check if we have valid credentials available
+    const credentials = this.getAffordMedCredentials();
+    if (!credentials) {
+      return false;
+    }
+
+    // Check if current token is still valid
+    const now = Date.now() / 1000;
+    if (this.accessToken && this.tokenExpiry > now) {
+      return true;
+    }
+
+    try {
+      const response = await fetch('http://20.244.56.144/evaluation-service/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        this.accessToken = data.access_token;
+        this.tokenExpiry = data.expires_in;
+        return true;
+      }
+    } catch (error) {
+      // Authentication failed, will fall back to local logging
+    }
+    
+    return false;
+  }
+
+  private getAffordMedCredentials(): AffordMedCredentials | null {
+    // Check if credentials are available in environment variables
+    if (typeof window !== 'undefined') {
+      return null; // Client-side, no environment variables
+    }
+    
+    // Server-side environment variables (if available)
+    const email = process.env.AFFORDMED_EMAIL;
+    const name = process.env.AFFORDMED_NAME;
+    const rollNo = process.env.AFFORDMED_ROLL_NO;
+    const accessCode = process.env.AFFORDMED_ACCESS_CODE;
+    const clientID = process.env.AFFORDMED_CLIENT_ID;
+    const clientSecret = process.env.AFFORDMED_CLIENT_SECRET;
+
+    if (email && name && rollNo && accessCode && clientID && clientSecret) {
+      return { email, name, rollNo, accessCode, clientID, clientSecret };
+    }
+    
+    return null;
+  }
+
+  private async sendToAffordMed(entry: LogEntry): Promise<boolean> {
+    if (!this.accessToken) {
+      return false;
+    }
+
+    try {
+      const response = await fetch('http://20.244.56.144/evaluation-service/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.accessToken}`,
+        },
+        body: JSON.stringify({
+          stack: entry.stack,
+          level: entry.level,
+          package: entry.pkg,
+          message: entry.message,
+        }),
+      });
+
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  private async output(entry: LogEntry): Promise<void> {
     const timestamp = entry.timestamp.toISOString();
     const logMessage = `[${timestamp}] [${entry.level.toUpperCase()}] [${entry.pkg}] ${entry.stack}: ${entry.message}`;
 
-    // In production, you might want to send logs to a service
-    // For now, we'll use a custom logging approach that doesn't use console.log
-    
-    // Store in localStorage for debugging if needed
+    // Try to authenticate and send to AffordMed API
+    const authenticated = await this.authenticateAffordMed();
+    if (authenticated) {
+      const sent = await this.sendToAffordMed(entry);
+      if (sent) {
+        // Successfully sent to AffordMed API
+        this.storeLocalBackup(entry, 'sent-to-affordmed');
+        return;
+      }
+    }
+
+    // Fallback to local storage and UI display
+    this.storeLocalBackup(entry, 'local-only');
+    this.displayInUI(logMessage);
+  }
+
+  private storeLocalBackup(entry: LogEntry, status: string): void {
     try {
       const existingLogs = localStorage.getItem('url-shortener-logs');
       const logs = existingLogs ? JSON.parse(existingLogs) : [];
-      logs.push(entry);
+      logs.push({ ...entry, status });
       
       // Keep only last 100 logs in localStorage
       if (logs.length > 100) {
@@ -53,12 +159,7 @@ class Logger {
       localStorage.setItem('url-shortener-logs', JSON.stringify(logs));
     } catch (error) {
       // If localStorage fails, we can't do much without console.log
-      // In a real production app, you'd send to a logging service
     }
-
-    // For development, you could also display logs in the UI
-    // or send them to a logging service
-    this.displayInUI(logMessage);
   }
 
   private displayInUI(message: string): void {

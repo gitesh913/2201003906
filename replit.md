@@ -145,7 +145,32 @@ This is a full-stack URL shortener application built with React, TypeScript, and
 
 Preferred communication style: Simple, everyday language.
 
+## AffordMed Integration
+
+### Authentication System
+The logging middleware now supports AffordMed's evaluation service authentication:
+- **Authentication endpoint**: `POST http://20.244.56.144/evaluation-service/auth`
+- **Logging endpoint**: `POST http://20.244.56.144/evaluation-service/logs`
+- **Token management**: Automatic token refresh and caching
+- **Fallback strategy**: Local logging when AffordMed API is unavailable
+
+### Required Credentials
+To enable AffordMed integration, the following environment variables are needed:
+- `AFFORDMED_EMAIL`: College email (Google-verified)
+- `AFFORDMED_NAME`: Full name
+- `AFFORDMED_ROLL_NO`: Roll number
+- `AFFORDMED_ACCESS_CODE`: Access code from AffordMed email
+- `AFFORDMED_CLIENT_ID`: Client ID from registration
+- `AFFORDMED_CLIENT_SECRET`: Client secret from registration
+
+### Current Behavior
+- **Without credentials**: Logs stored locally in localStorage + UI display
+- **With credentials**: Logs sent to AffordMed API with local backup
+- **API failure**: Automatic fallback to local logging
+
 ## Changelog
 
 Changelog:
 - July 08, 2025. Initial setup
+- July 08, 2025. Integrated AffordMed authentication and logging system
+- July 08, 2025. Added automatic fallback logging mechanism
